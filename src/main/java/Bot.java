@@ -51,10 +51,11 @@ public class Bot extends TelegramLongPollingBot {
      */
     @Override
     public void onUpdateReceived(Update update) {
+        String message = update.getMessage().getText();
 //        if (update.hasMessage()) {
 //            String command = update.getMessage().getText();
 //            Message message = update.getMessage();
-        String message = update.getMessage().getText();
+//
 //            long chatID = update.getMessage().getChatId();
 //
 //            float user_latitude = update.getMessage().getLocation().getLatitude();

@@ -1,55 +1,97 @@
-import org.json.JSONArray;
-import org.json.JSONObject;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.JSONValue;
+import org.json.simple.parser.ParseException;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.Date;
 import java.util.Properties;
 
 public class WeatherClass {
 
     private static String BOT_WEATHER_API;
-//    private static String weather_state = "";
-//    private String temp_now = "";
-//    private String temp_min = "";
-//    private String temp_max = "";
 
     /**
-     *
      * @param x - latitude(широта)
      * @param y - longtitude(долгота)
+     * @return строка(json файл с данными
      */
-    public static void init(String x, String y) throws IOException {
+    public static String get_string(String x, String y) throws IOException {
 
         FileInputStream fileInputStream;
         Properties prop = new Properties();
-        try {
-            fileInputStream = new FileInputStream("src/main/resources/config.properties");
-            prop.load(fileInputStream);
-            BOT_WEATHER_API = prop.getProperty("BOT_WEATHER_API");
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        fileInputStream = new FileInputStream("src/main/resources/config.properties");
+        prop.load(fileInputStream);
+        BOT_WEATHER_API = prop.getProperty("BOT_WEATHER_API");
 
-        String url = "http://api.openweathermap.org/data/2.5/forecast?lat="+x+"&lon="+y+"&appid="+BOT_WEATHER_API+"&lang=ru&units=metric";
-        String inputLine;
+        URL url = new URL("https://api.openweathermap.org/data/2.5/onecall?lat=" + x + "&lon=" + y + "&appid=" + BOT_WEATHER_API + "&lang=ru&exclude=daily&units=metric");
+        if (x == null || y == null) return "";
+
         StringBuilder response = new StringBuilder();
-//        выполняем гет запрос по нашей ссылке
-        URL obj = new URL(url);
-        HttpURLConnection connection = (HttpURLConnection) obj.openConnection();
-        connection.setRequestMethod("GET");
-        BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-        while ((inputLine = in.readLine()) != null) {
-            response.append(inputLine);
+        // открываем соедиение к указанному URL
+        try (BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()))) {
+            String inputLine;
+            // построчно считываем результат в объект StringBuilder
+            while ((inputLine = in.readLine()) != null) {
+                response.append(inputLine);
+                System.out.println(inputLine + "\n");
+            }
         }
-        in.close();
-        System.out.print(response);
+        return response.toString();
     }
 
-    public static void main(String[] args) throws IOException {
-        init("20","20");
+    public static JSONObject parserCurrentWeather(String response) throws ParseException {
+        JSONObject weatherJson = (JSONObject) JSONValue.parseWithException(response);
+        JSONObject currentWeather = (JSONObject) weatherJson.get("current");
+
+        JSONArray currentDescrip = (JSONArray) currentWeather.get("weather");
+        JSONObject descript = (JSONObject) currentDescrip.get(0);
+
+        JSONArray jsonHourlyWeather = new JSONArray();
+        JSONObject jsonCurrentWeather = new JSONObject();
+        JSONObject sendWeather = new JSONObject();
+
+// получили погоду в настоящее время
+        Long currentTemp = (Long) currentWeather.get("temp");
+        String currentDescription = (String) descript.get("description");
+//        получили погоду на день
+        JSONArray hourlyWeather = (JSONArray) weatherJson.get("hourly");
+        //дикие манипуляции с джсонами
+        for (Object hourKey : hourlyWeather) {
+            JSONObject hourData = (JSONObject) hourKey;
+            JSONObject tempData = new JSONObject();
+
+            long time = (long) hourData.get("dt");
+            Date date = new Date(time * 1000);
+
+            JSONArray hourDesc = (JSONArray) hourData.get("weather");
+            JSONObject hourTemp = (JSONObject) hourDesc.get(0);
+
+            int timeHour = date.getHours(); // to json
+            Object tempHour = hourData.get("temp");
+            String description = (String) hourTemp.get("description");
+            tempData.put("datetime", timeHour);
+            tempData.put("temp", tempHour);
+            tempData.put("description", description);
+            jsonHourlyWeather.add(tempData);
+        }
+
+        jsonCurrentWeather.put("temp", currentTemp);
+        jsonCurrentWeather.put("description", currentDescription);
+        jsonCurrentWeather.toJSONString();
+        jsonHourlyWeather.toJSONString();
+        sendWeather.put("current", jsonCurrentWeather);
+        sendWeather.put("hourly", jsonHourlyWeather);
+        sendWeather.toJSONString();
+        return sendWeather;
+    }
+
+    public static void main(String[] args) throws IOException, ParseException {
+        System.out.print(parserCurrentWeather(get_string("56.85","60.61")));
+
     }
 }
