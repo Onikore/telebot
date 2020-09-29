@@ -10,7 +10,6 @@ public class database_logic {
      * Подключается к базе данных(далее БД)
      */
     public static void Connect() throws ClassNotFoundException, SQLException {
-        connection = null;
         Class.forName("org.sqlite.JDBC");
         connection = DriverManager.getConnection("jdbc:sqlite:src/main/resources/users_location.db");
         System.out.println("База Подключена!");
@@ -22,7 +21,8 @@ public class database_logic {
     public static void CreateDB() throws ClassNotFoundException, SQLException {
         statmt = connection.createStatement();
         statmt.execute("CREATE TABLE if not exists 'users_data' " +
-                "('user_id' INTEGER PRIMARY KEY UNIQUE, " +
+                "('user_id' VARCHAR PRIMARY KEY UNIQUE , " +
+                "'user_name' VARCHAR ,"+
                 "'user_latitude' DOUBLE, " +
                 "'user_longtitude' DOUBLE);");
         System.out.println("Таблица создана или уже существует.");
@@ -31,9 +31,21 @@ public class database_logic {
     /**
      * Метод записи данных в БД
      */
-    public static void WriteDB() throws SQLException {
-//        statmt.execute("INSERT INTO 'users' ('name', 'phone') VALUES ('Petya', 125453); ");
-        System.out.println("Таблица заполнена");
+    public static void WriteDB(String username, Long userId, float lantitude, float longtitude) throws SQLException {
+        String str = "INSERT INTO 'users_data' ('user_id', 'user_name','user_latitude','user_longtitude') VALUES (?,?,?,?);";
+        PreparedStatement statement = connection.prepareStatement(str);
+        try {
+            statement.setInt(1, Math.toIntExact(userId));
+            statement.setString(2, username);
+            statement.setFloat(3, lantitude);
+            statement.setFloat(4, longtitude);
+
+            if (statement.executeUpdate() == 1){
+                System.out.println("Таблица заполнена");
+            }
+        } catch (SQLException  e){
+            e.printStackTrace();
+        }
     }
 
     /**

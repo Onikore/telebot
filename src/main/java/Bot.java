@@ -1,3 +1,4 @@
+import org.checkerframework.checker.units.qual.K;
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
@@ -12,8 +13,10 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -51,26 +54,74 @@ public class Bot extends TelegramLongPollingBot {
      */
     @Override
     public void onUpdateReceived(Update update) {
-        String message = update.getMessage().getText();
-//        if (update.hasMessage()) {
-//            String command = update.getMessage().getText();
-//            Message message = update.getMessage();
+        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
+        replyKeyboardMarkup.setSelective(true);
+        replyKeyboardMarkup.setResizeKeyboard(true);
+        replyKeyboardMarkup.setOneTimeKeyboard(false);
+
+        ArrayList<KeyboardRow> keyboard = new ArrayList<>();
+        KeyboardRow firstRow = new KeyboardRow();
+        KeyboardRow secondRow = new KeyboardRow();
+
+        Message message = update.getMessage();
+        String chatID = String.valueOf(update.getMessage().getChatId());
+
+        if(update.hasMessage() && message.hasText()){
+            switch (message.getText()){
+                case "/start":
+                    keyboard.clear();
+                    firstRow.add(new KeyboardButton("Получить геолокацию").setRequestLocation(true));
+                    secondRow.add("Помощь");
+                    keyboard.add(firstRow);
+                    keyboard.add(secondRow);
+                    replyKeyboardMarkup.setKeyboard(keyboard);
+                    
+                    if(message.hasLocation()) {
+                        float latitude = message.getLocation().getLatitude();
+                        float longtitude = message.getLocation().getLongitude();
+                        try {
+                            database.writeToDb(message.getChat().getUserName(),
+                                    message.getChat().getId(),
+                                    latitude,
+                                    longtitude);
+                            sendMsg(chatID, "Спасибо");
+                        } catch (ClassNotFoundException | SQLException e) {
+                            e.printStackTrace();
+                        }
+                    }
+
+                    sendMsg(chatID,"стартуем");
+                    break;
+//                case "Получить геолокацию":
+//                    float latitude = message.getLocation().getLatitude();
+//                    float longtitude = message.getLocation().getLongitude();
+//                    try {
+//                        database.writeToDb(message.getChat().getUserName(),
+//                                            message.getChat().getId(),
+//                                            latitude,
+//                                            longtitude );
+//                        sendMsg(chatID,"Спасибо");
+//                    } catch (ClassNotFoundException | SQLException e) {
+//                        e.printStackTrace();
+//                    }
 //
-//            long chatID = update.getMessage().getChatId();
-//
-//            float user_latitude = update.getMessage().getLocation().getLatitude();
-//            float longtitude = update.getMessage().getLocation().getLongitude();
-//            if(message.hasLocation()){
-//                String weather = "";
-//            }
-//        }
-        sendMsg(update.getMessage().getChatId().toString(), message);
+//                    break;
+                case "Помощь":
+                    sendMsg(chatID,"pomoch'");
+                    break;
+                default:
+                    sendMsg(chatID,"neverno");
+                    break;
+
+            }
+        }
+
+
     }
 
     /**
      * Метод для настройки сообщения и его отправки.
-     *
-     * @param chatId id чата
+     *  @param chatId id чата
      * @param s      Строка, которую необходимот отправить в качестве сообщения.
      */
     public synchronized void sendMsg(String chatId, String s) {
@@ -80,7 +131,6 @@ public class Bot extends TelegramLongPollingBot {
         sendMessage.enableMarkdown(true);
         sendMessage.setChatId(chatId);
         sendMessage.setText(s);
-        setButtons(sendMessage);
         try {
             execute(sendMessage);
         } catch (TelegramApiException e) {
@@ -108,32 +158,32 @@ public class Bot extends TelegramLongPollingBot {
         return BOT_TOKEN;
     }
 
-    public synchronized void setButtons(SendMessage sendMessage) {
-        // Создаем клавиуатуру
-        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
-        sendMessage.setReplyMarkup(replyKeyboardMarkup);
-        replyKeyboardMarkup.setSelective(true);
-        replyKeyboardMarkup.setResizeKeyboard(true);
-        replyKeyboardMarkup.setOneTimeKeyboard(false);
-
-
-        // Создаем список строк клавиатуры
-        List<KeyboardRow> keyboard = new ArrayList<>();
-
-        // Первая строчка клавиатуры
-        KeyboardRow keyboardFirstRow = new KeyboardRow();
-        // Добавляем кнопки в первую строчку клавиатуры
-        keyboardFirstRow.add(new KeyboardButton("Получить геолокацию").setRequestLocation(true));
-
-        // Вторая строчка клавиатуры
-        KeyboardRow keyboardSecondRow = new KeyboardRow();
-        // Добавляем кнопки во вторую строчку клавиатуры
-        keyboardSecondRow.add(new KeyboardButton("Помощь"));
-
-        // Добавляем все строчки клавиатуры в список
-        keyboard.add(keyboardFirstRow);
-        keyboard.add(keyboardSecondRow);
-        // и устанваливаем этот список нашей клавиатуре
-        replyKeyboardMarkup.setKeyboard(keyboard);
-    }
+//    public synchronized void setButtonsForStart(SendMessage sendMessage) {
+//        // Создаем клавиуатуру
+//        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
+//        sendMessage.setReplyMarkup(replyKeyboardMarkup);
+//        replyKeyboardMarkup.setSelective(true);
+//        replyKeyboardMarkup.setResizeKeyboard(true);
+//        replyKeyboardMarkup.setOneTimeKeyboard(true);
+//
+//
+//        // Создаем список строк клавиатуры
+//        List<KeyboardRow> keyboard = new ArrayList<>();
+//
+//        // Первая строчка клавиатуры
+//        KeyboardRow keyboardFirstRow = new KeyboardRow();
+//        // Добавляем кнопки в первую строчку клавиатуры
+//        keyboardFirstRow.add(new KeyboardButton("Получить геолокацию").setRequestLocation(true));
+//
+//        // Вторая строчка клавиатуры
+//        KeyboardRow keyboardSecondRow = new KeyboardRow();
+//        // Добавляем кнопки во вторую строчку клавиатуры
+//        keyboardSecondRow.add(new KeyboardButton("Помощь"));
+//
+//        // Добавляем все строчки клавиатуры в список
+//        keyboard.add(keyboardFirstRow);
+//        keyboard.add(keyboardSecondRow);
+//        // и устанваливаем этот список нашей клавиатуре
+//        replyKeyboardMarkup.setKeyboard(keyboard);
+//    }
 }

@@ -2,6 +2,7 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
+import org.jsoup.Jsoup;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -20,7 +21,8 @@ public class WeatherClass {
      * @param y - longtitude(долгота)
      * @return строка(json файл с данными
      */
-    public static String get_string(String x, String y) throws IOException {
+    public static String get_json_string(String x, String y) throws IOException {
+        if (x == null || y == null) return "";
 
         FileInputStream fileInputStream;
         Properties prop = new Properties();
@@ -28,20 +30,9 @@ public class WeatherClass {
         prop.load(fileInputStream);
         BOT_WEATHER_API = prop.getProperty("BOT_WEATHER_API");
 
-        URL url = new URL("https://api.openweathermap.org/data/2.5/onecall?lat=" + x + "&lon=" + y + "&appid=" + BOT_WEATHER_API + "&lang=ru&exclude=daily&units=metric");
-        if (x == null || y == null) return "";
+        String url ="https://api.openweathermap.org/data/2.5/onecall?lat=" + x + "&lon=" + y + "&appid=" + BOT_WEATHER_API + "&lang=ru&exclude=daily&units=metric";
 
-        StringBuilder response = new StringBuilder();
-        // открываем соедиение к указанному URL
-        try (BufferedReader in = new BufferedReader(new InputStreamReader(url.openStream()))) {
-            String inputLine;
-            // построчно считываем результат в объект StringBuilder
-            while ((inputLine = in.readLine()) != null) {
-                response.append(inputLine);
-                System.out.println(inputLine + "\n");
-            }
-        }
-        return response.toString();
+        return Jsoup.connect(url).ignoreContentType(true).execute().body();
     }
 
     public static JSONObject parserCurrentWeather(String response) throws ParseException {
@@ -91,7 +82,7 @@ public class WeatherClass {
     }
 
     public static void main(String[] args) throws IOException, ParseException {
-        System.out.print(parserCurrentWeather(get_string("56.85","60.61")));
+        System.out.print(parserCurrentWeather(get_json_string("56.85","60.61")));
 
     }
 }
