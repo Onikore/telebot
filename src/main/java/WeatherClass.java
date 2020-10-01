@@ -4,17 +4,14 @@ import org.json.simple.JSONValue;
 import org.json.simple.parser.ParseException;
 import org.jsoup.Jsoup;
 
-import java.io.BufferedReader;
+
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
 
 public class WeatherClass {
-
-    private static String BOT_WEATHER_API;
 
     /**
      * @param x - latitude(широта)
@@ -28,61 +25,75 @@ public class WeatherClass {
         Properties prop = new Properties();
         fileInputStream = new FileInputStream("src/main/resources/config.properties");
         prop.load(fileInputStream);
-        BOT_WEATHER_API = prop.getProperty("BOT_WEATHER_API");
+        String BOT_WEATHER_API = prop.getProperty("BOT_WEATHER_API");
 
-        String url ="https://api.openweathermap.org/data/2.5/onecall?lat=" + x + "&lon=" + y + "&appid=" + BOT_WEATHER_API + "&lang=ru&exclude=daily&units=metric";
+        String url ="https://api.openweathermap.org/data/2.5/onecall?lat=" + x + "&lon=" + y + "&appid=" + BOT_WEATHER_API + "&lang=ru&units=metric";
 
         return Jsoup.connect(url).ignoreContentType(true).execute().body();
     }
 
-    public static JSONObject parserCurrentWeather(String response) throws ParseException {
-        JSONObject weatherJson = (JSONObject) JSONValue.parseWithException(response);
-        JSONObject currentWeather = (JSONObject) weatherJson.get("current");
+    public static Model jsonToCurrent(String jsonData) throws ParseException {
+        Model model = new Model();
+        JSONObject parsedData = (JSONObject) JSONValue.parseWithException(jsonData);
+        JSONObject currentData = (JSONObject) parsedData.get("current");
 
-        JSONArray currentDescrip = (JSONArray) currentWeather.get("weather");
-        JSONObject descript = (JSONObject) currentDescrip.get(0);
+        long time = (long) currentData.get("dt");
+        Date date = new Date(time * 1000);
 
-        JSONArray jsonHourlyWeather = new JSONArray();
-        JSONObject jsonCurrentWeather = new JSONObject();
-        JSONObject sendWeather = new JSONObject();
+        JSONArray weather = (JSONArray) currentData.get("weather");
+        JSONObject description = (JSONObject) weather.get(0);
 
-// получили погоду в настоящее время
-        Long currentTemp = (Long) currentWeather.get("temp");
-        String currentDescription = (String) descript.get("description");
-//        получили погоду на день
-        JSONArray hourlyWeather = (JSONArray) weatherJson.get("hourly");
-        //дикие манипуляции с джсонами
-        for (Object hourKey : hourlyWeather) {
-            JSONObject hourData = (JSONObject) hourKey;
+        model.setDatetime(date);
+        model.setTemp((double)(long) currentData.get("temp"));
+        model.setFeelsLike((Double) currentData.get("feels_like"));
+        model.setHumidity((double) (long) currentData.get("humidity"));
+        model.setWeatherDescription((String) description.get("description"));
+
+        return model;
+    }
+
+    public static JSONObject jsonToHourly(String jsonData) throws ParseException {
+        JSONObject parsedData = (JSONObject) JSONValue.parseWithException(jsonData);
+        JSONArray dailyData = (JSONArray) parsedData.get("daily");
+
+        JSONObject recievData = new JSONObject();
+
+        for (Object dayKey: dailyData){
             JSONObject tempData = new JSONObject();
 
-            long time = (long) hourData.get("dt");
+            JSONObject dayData = (JSONObject) dayKey;
+            JSONObject allTemp = (JSONObject) dayData.get("temp");
+
+            JSONArray weather = (JSONArray) dayData.get("weather");
+            JSONObject desc = (JSONObject) weather.get(0);
+
+            long time = (long) dayData.get("dt");
+
+            SimpleDateFormat formater = new SimpleDateFormat("dd-MMMM-yyyy");
             Date date = new Date(time * 1000);
+            String new_date = formater.format(date);
 
-            JSONArray hourDesc = (JSONArray) hourData.get("weather");
-            JSONObject hourTemp = (JSONObject) hourDesc.get(0);
+            String eve = String.valueOf(allTemp.get("eve"));
+            String day = String.valueOf(allTemp.get("day"));
+            String morn = String.valueOf(allTemp.get("morn"));
+            String night = String.valueOf(allTemp.get("night"));
+            String description = String.valueOf(desc.get("description"));
 
-            int timeHour = date.getHours(); // to json
-            Object tempHour = hourData.get("temp");
-            String description = (String) hourTemp.get("description");
-            tempData.put("datetime", timeHour);
-            tempData.put("temp", tempHour);
-            tempData.put("description", description);
-            jsonHourlyWeather.add(tempData);
+            tempData.put("eve",eve);
+            tempData.put("day",day);
+            tempData.put("morn",morn);
+            tempData.put("night",night);
+            tempData.put("description",description);
+            tempData.toJSONString();
+
+            recievData.put(new_date,tempData);
         }
-
-        jsonCurrentWeather.put("temp", currentTemp);
-        jsonCurrentWeather.put("description", currentDescription);
-        jsonCurrentWeather.toJSONString();
-        jsonHourlyWeather.toJSONString();
-        sendWeather.put("current", jsonCurrentWeather);
-        sendWeather.put("hourly", jsonHourlyWeather);
-        sendWeather.toJSONString();
-        return sendWeather;
+        recievData.toJSONString();
+        return recievData;
     }
 
-    public static void main(String[] args) throws IOException, ParseException {
-        System.out.print(parserCurrentWeather(get_json_string("56.85","60.61")));
-
-    }
+//    public static void main(String[] args) throws IOException, ParseException {
+//        System.out.print(jsonToHourly(get_json_string("56.85","60.61")));
+//
+//    }
 }

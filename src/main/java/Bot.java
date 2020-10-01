@@ -54,27 +54,12 @@ public class Bot extends TelegramLongPollingBot {
      */
     @Override
     public void onUpdateReceived(Update update) {
-        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
-        replyKeyboardMarkup.setSelective(true);
-        replyKeyboardMarkup.setResizeKeyboard(true);
-        replyKeyboardMarkup.setOneTimeKeyboard(false);
-
-        ArrayList<KeyboardRow> keyboard = new ArrayList<>();
-        KeyboardRow firstRow = new KeyboardRow();
-        KeyboardRow secondRow = new KeyboardRow();
-
         Message message = update.getMessage();
         String chatID = String.valueOf(update.getMessage().getChatId());
 
         if(update.hasMessage() && message.hasText()){
             switch (message.getText()){
                 case "/start":
-                    keyboard.clear();
-                    firstRow.add(new KeyboardButton("Получить геолокацию").setRequestLocation(true));
-                    secondRow.add("Помощь");
-                    keyboard.add(firstRow);
-                    keyboard.add(secondRow);
-                    replyKeyboardMarkup.setKeyboard(keyboard);
                     
                     if(message.hasLocation()) {
                         float latitude = message.getLocation().getLatitude();
