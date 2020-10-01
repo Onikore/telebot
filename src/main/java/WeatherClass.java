@@ -18,7 +18,7 @@ public class WeatherClass {
      * @param y - longtitude(долгота)
      * @return строка(json файл с данными
      */
-    public static String get_json_string(String x, String y) throws IOException {
+    public static String get_json_string(Double x, Double y) throws IOException {
         if (x == null || y == null) return "";
 
         FileInputStream fileInputStream;
@@ -37,13 +37,15 @@ public class WeatherClass {
         JSONObject parsedData = (JSONObject) JSONValue.parseWithException(jsonData);
         JSONObject currentData = (JSONObject) parsedData.get("current");
 
+        SimpleDateFormat formater = new SimpleDateFormat("dd-MMMM-yyyy");
         long time = (long) currentData.get("dt");
         Date date = new Date(time * 1000);
+        String new_date = formater.format(date);
 
         JSONArray weather = (JSONArray) currentData.get("weather");
         JSONObject description = (JSONObject) weather.get(0);
 
-        model.setDatetime(date);
+        model.setDatetime(new_date);
         model.setTemp((double)(long) currentData.get("temp"));
         model.setFeelsLike((Double) currentData.get("feels_like"));
         model.setHumidity((double) (long) currentData.get("humidity"));

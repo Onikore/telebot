@@ -1,17 +1,17 @@
 import java.util.Date;
 
 public class Model {
-    private Date datetime;
+    private String datetime;
     private Double temp;
     private Double humidity;
     private Double feelsLike;
     private String weatherDescription;
 
-    public Date getDatetime() {
+    public String getDatetime() {
         return datetime;
     }
 
-    public void setDatetime(Date datetime) {
+    public void setDatetime(String datetime) {
         this.datetime = datetime;
     }
 

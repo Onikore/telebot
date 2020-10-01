@@ -57,51 +57,55 @@ public class Bot extends TelegramLongPollingBot {
         Message message = update.getMessage();
         String chatID = String.valueOf(update.getMessage().getChatId());
 
+        if(message.hasLocation()) {
+            sendMsg(chatID,
+                    "ЛОКАЦИЯ ЕСТЬ");
+            float latitude = message.getLocation().getLatitude();
+            float longtitude = message.getLocation().getLongitude();
+            sendMsg(chatID,
+                    "ЗАХОЖУ В ТРАЙ");
+            try {
+                database_logic.Connect();
+                database_logic.WriteDB(message.getChat().getUserName(),
+                        message.getChat().getId(),
+                        latitude,
+                        longtitude);
+                database_logic.CloseDB();
+                sendMsg(chatID,
+                        "Спасибо");
+            } catch (SQLException | ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+            sendMsg(chatID,
+                    "ВЫХОЖУ");
+        }
+
         if(update.hasMessage() && message.hasText()){
             switch (message.getText()){
                 case "/start":
-                    
-                    if(message.hasLocation()) {
-                        float latitude = message.getLocation().getLatitude();
-                        float longtitude = message.getLocation().getLongitude();
-                        try {
-                            database.writeToDb(message.getChat().getUserName(),
-                                    message.getChat().getId(),
-                                    latitude,
-                                    longtitude);
-                            sendMsg(chatID, "Спасибо");
-                        } catch (ClassNotFoundException | SQLException e) {
-                            e.printStackTrace();
-                        }
-                    }
-
-                    sendMsg(chatID,"стартуем");
+                    sendMsg(chatID,
+                            "здарова");
                     break;
-//                case "Получить геолокацию":
-//                    float latitude = message.getLocation().getLatitude();
-//                    float longtitude = message.getLocation().getLongitude();
-//                    try {
-//                        database.writeToDb(message.getChat().getUserName(),
-//                                            message.getChat().getId(),
-//                                            latitude,
-//                                            longtitude );
-//                        sendMsg(chatID,"Спасибо");
-//                    } catch (ClassNotFoundException | SQLException e) {
-//                        e.printStackTrace();
-//                    }
-//
-//                    break;
                 case "Помощь":
-                    sendMsg(chatID,"pomoch'");
+                    sendMsg(chatID,
+                            "я ничего не умею");
+                    break;
+                case "Погода":
+                    try {
+                        database_logic.Connect();
+                        sendMsg(chatID,
+                                (database_logic.ReadDB(message.getChat().getId())));
+                        database_logic.CloseDB();
+                    } catch (SQLException | ClassNotFoundException e) {
+                        e.printStackTrace();
+                    }
                     break;
                 default:
-                    sendMsg(chatID,"neverno");
+                    sendMsg(chatID,
+                            "такой команды нет хех)");
                     break;
-
             }
         }
-
-
     }
 
     /**
@@ -116,6 +120,7 @@ public class Bot extends TelegramLongPollingBot {
         sendMessage.enableMarkdown(true);
         sendMessage.setChatId(chatId);
         sendMessage.setText(s);
+        setButtonsForStart(sendMessage);
         try {
             execute(sendMessage);
         } catch (TelegramApiException e) {
@@ -143,32 +148,33 @@ public class Bot extends TelegramLongPollingBot {
         return BOT_TOKEN;
     }
 
-//    public synchronized void setButtonsForStart(SendMessage sendMessage) {
-//        // Создаем клавиуатуру
-//        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
-//        sendMessage.setReplyMarkup(replyKeyboardMarkup);
-//        replyKeyboardMarkup.setSelective(true);
-//        replyKeyboardMarkup.setResizeKeyboard(true);
-//        replyKeyboardMarkup.setOneTimeKeyboard(true);
-//
-//
-//        // Создаем список строк клавиатуры
-//        List<KeyboardRow> keyboard = new ArrayList<>();
-//
-//        // Первая строчка клавиатуры
-//        KeyboardRow keyboardFirstRow = new KeyboardRow();
-//        // Добавляем кнопки в первую строчку клавиатуры
-//        keyboardFirstRow.add(new KeyboardButton("Получить геолокацию").setRequestLocation(true));
-//
-//        // Вторая строчка клавиатуры
-//        KeyboardRow keyboardSecondRow = new KeyboardRow();
-//        // Добавляем кнопки во вторую строчку клавиатуры
-//        keyboardSecondRow.add(new KeyboardButton("Помощь"));
-//
-//        // Добавляем все строчки клавиатуры в список
-//        keyboard.add(keyboardFirstRow);
-//        keyboard.add(keyboardSecondRow);
-//        // и устанваливаем этот список нашей клавиатуре
-//        replyKeyboardMarkup.setKeyboard(keyboard);
-//    }
+    public synchronized void setButtonsForStart(SendMessage sendMessage) {
+        // Создаем клавиуатуру
+        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
+        sendMessage.setReplyMarkup(replyKeyboardMarkup);
+        replyKeyboardMarkup.setSelective(true);
+        replyKeyboardMarkup.setResizeKeyboard(true);
+        replyKeyboardMarkup.setOneTimeKeyboard(true);
+
+
+        // Создаем список строк клавиатуры
+        List<KeyboardRow> keyboard = new ArrayList<>();
+
+        // Первая строчка клавиатуры
+        KeyboardRow keyboardFirstRow = new KeyboardRow();
+        // Добавляем кнопки в первую строчку клавиатуры
+        keyboardFirstRow.add(new KeyboardButton("Получить геолокацию").setRequestLocation(true));
+        keyboardFirstRow.add(new KeyboardButton("Погода"));
+
+        // Вторая строчка клавиатуры
+        KeyboardRow keyboardSecondRow = new KeyboardRow();
+        // Добавляем кнопки во вторую строчку клавиатуры
+        keyboardSecondRow.add(new KeyboardButton("Помощь"));
+
+        // Добавляем все строчки клавиатуры в список
+        keyboard.add(keyboardFirstRow);
+        keyboard.add(keyboardSecondRow);
+        // и устанваливаем этот список нашей клавиатуре
+        replyKeyboardMarkup.setKeyboard(keyboard);
+    }
 }
