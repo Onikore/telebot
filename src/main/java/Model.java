@@ -1,5 +1,3 @@
-import java.util.Date;
-
 public class Model {
     private String datetime;
     private Double temp;

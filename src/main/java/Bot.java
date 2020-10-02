@@ -12,7 +12,6 @@ import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
@@ -57,47 +56,40 @@ public class Bot extends TelegramLongPollingBot {
         String chatID = String.valueOf(update.getMessage().getChatId());
 
         if(message.hasLocation()) {
-            sendMsg(chatID,
-                    "ЛОКАЦИЯ ЕСТЬ");
+            DB.CreateDB();
+            sendMsg(chatID, "ЛОКАЦИЯ ЕСТЬ");
             float latitude = message.getLocation().getLatitude();
             float longtitude = message.getLocation().getLongitude();
-            sendMsg(chatID,
-                    "ЗАХОЖУ В ТРАЙ");
-            try {
-                DB.WriteDB(message.getChat().getUserName(),
-                        message.getChat().getId(),
-                        latitude,
-                        longtitude);
-                sendMsg(chatID,
-                        "Спасибо");
-            } catch (SQLException | ClassNotFoundException e) {
-                e.printStackTrace();
-            }
-            sendMsg(chatID,
-                    "ВЫХОЖУ");
+
+            DB.WriteDB(message.getChat().getUserName(),
+                    message.getChat().getId(),
+                    latitude,
+                    longtitude);
+            sendMsg(chatID, "Спасибо");
+            DB.Close();
         }
 
         if(update.hasMessage() && message.hasText()){
-            switch (message.getText()){
+            switch (message.getText()) {
                 case "/start":
-                    sendMsg(chatID,
-                            "здарова");
+                    sendMsg(chatID, "здарова");
                     break;
+
+
+                case "Погода сейчас":
+                    sendMsg(chatID, (DB.ReadDB(message.getChat().getId())));
+                    DB.Close();
+                    break;
+
+
                 case "Помощь":
-                    sendMsg(chatID,
-                            "я ничего не умею");
+                    sendMsg(chatID, "я ничего не умею");
                     break;
-                case "Погода":
-                    try {
-                        sendMsg(chatID,
-                                (DB.ReadDB(message.getChat().getId())));
-                    } catch (SQLException | ClassNotFoundException e) {
-                        e.printStackTrace();
-                    }
+                case "/stop":
+                    sendMsg(chatID, "poka");
                     break;
                 default:
-                    sendMsg(chatID,
-                            "такой команды нет хех)");
+                    sendMsg(chatID, "такой команды нет хех)");
                     break;
             }
         }
@@ -159,7 +151,7 @@ public class Bot extends TelegramLongPollingBot {
         KeyboardRow keyboardFirstRow = new KeyboardRow();
         // Добавляем кнопки в первую строчку клавиатуры
         keyboardFirstRow.add(new KeyboardButton("Получить геолокацию").setRequestLocation(true));
-        keyboardFirstRow.add(new KeyboardButton("Погода"));
+        keyboardFirstRow.add(new KeyboardButton("Погода сейчас"));
 
         // Вторая строчка клавиатуры
         KeyboardRow keyboardSecondRow = new KeyboardRow();
