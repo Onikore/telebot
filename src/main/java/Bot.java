@@ -1,4 +1,3 @@
-import org.checkerframework.checker.units.qual.K;
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
@@ -16,7 +15,6 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -53,7 +51,8 @@ public class Bot extends TelegramLongPollingBot {
      * @param update Содержит сообщение от пользователя.
      */
     @Override
-    public void onUpdateReceived(Update update) {
+    public void onUpdateReceived(Update update){
+
         Message message = update.getMessage();
         String chatID = String.valueOf(update.getMessage().getChatId());
 
@@ -65,12 +64,10 @@ public class Bot extends TelegramLongPollingBot {
             sendMsg(chatID,
                     "ЗАХОЖУ В ТРАЙ");
             try {
-                database_logic.Connect();
-                database_logic.WriteDB(message.getChat().getUserName(),
+                DB.WriteDB(message.getChat().getUserName(),
                         message.getChat().getId(),
                         latitude,
                         longtitude);
-                database_logic.CloseDB();
                 sendMsg(chatID,
                         "Спасибо");
             } catch (SQLException | ClassNotFoundException e) {
@@ -92,10 +89,8 @@ public class Bot extends TelegramLongPollingBot {
                     break;
                 case "Погода":
                     try {
-                        database_logic.Connect();
                         sendMsg(chatID,
-                                (database_logic.ReadDB(message.getChat().getId())));
-                        database_logic.CloseDB();
+                                (DB.ReadDB(message.getChat().getId())));
                     } catch (SQLException | ClassNotFoundException e) {
                         e.printStackTrace();
                     }
