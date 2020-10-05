@@ -4,16 +4,12 @@ import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboardMarkup;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardButton;
-import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.KeyboardRow;
+import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
 
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -44,20 +40,16 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
-    /**
-     * Метод для приема сообщений.
-     *
-     * @param update Содержит сообщение от пользователя.
-     */
+
     @Override
     public void onUpdateReceived(Update update){
 
         Message message = update.getMessage();
         String chatID = String.valueOf(update.getMessage().getChatId());
+        Long userID = message.getChat().getId();
 
         if(message.hasLocation()) {
             DB.CreateDB();
-            sendMsg(chatID, "ЛОКАЦИЯ ЕСТЬ");
             float latitude = message.getLocation().getLatitude();
             float longtitude = message.getLocation().getLongitude();
 
@@ -65,49 +57,50 @@ public class Bot extends TelegramLongPollingBot {
                     message.getChat().getId(),
                     latitude,
                     longtitude);
-            sendMsg(chatID, "Спасибо");
+            sendMsgWithKey(chatID, "Я тебя записал, cпасибо", keys.Main());
             DB.Close();
         }
 
         if(update.hasMessage() && message.hasText()){
             switch (message.getText()) {
                 case "/start":
-                    sendMsg(chatID, "здарова");
+                    sendMsgWithKey(chatID,"Привет",keys.Start());
                     break;
 
-
                 case "Погода сейчас":
-                    sendMsg(chatID, (DB.ReadDB(message.getChat().getId())));
+                    sendMsgWithKey(chatID, DB.ReadWeather(userID, "now"), keys.Main());
                     DB.Close();
                     break;
 
+                case "Погода сегодня":
+                    sendMsgWithKey(chatID, DB.ReadWeather(userID, "today"), keys.Main());
+                    DB.Close();
+                    break;
+
+                case "Погода завтра":
+                    sendMsgWithKey(chatID, DB.ReadWeather(userID, "tomorrow"), keys.Main());
+                    break;
 
                 case "Помощь":
-                    sendMsg(chatID, "я ничего не умею");
+                    sendMsg(chatID, "Я могу показать тебе погоду:\n в данный момент\n на сегодня \n на завтра\n" +
+                            " но сначала дай знать где ты☻\n(это будет всего 1 раз)");
                     break;
                 case "/stop":
-                    sendMsg(chatID, "poka");
+                    sendMsg(chatID, "Жаль что ты уходишь");
                     break;
                 default:
-                    sendMsg(chatID, "такой команды нет хех)");
+                    sendMsg(chatID, "такой команды нет");
                     break;
             }
         }
     }
 
-    /**
-     * Метод для настройки сообщения и его отправки.
-     *  @param chatId id чата
-     * @param s      Строка, которую необходимот отправить в качестве сообщения.
-     */
     public synchronized void sendMsg(String chatId, String s) {
         Logger logger = Logger.getLogger(Bot.class.getName());
-
         SendMessage sendMessage = new SendMessage();
         sendMessage.enableMarkdown(true);
         sendMessage.setChatId(chatId);
         sendMessage.setText(s);
-        setButtonsForStart(sendMessage);
         try {
             execute(sendMessage);
         } catch (TelegramApiException e) {
@@ -115,53 +108,27 @@ public class Bot extends TelegramLongPollingBot {
         }
     }
 
-    /**
-     * Метод возвращает имя бота, указанное при регистрации.
-     *
-     * @return имя бота
-     */
+    public synchronized void sendMsgWithKey(String chatId, String s, ReplyKeyboard mode) {
+        Logger logger = Logger.getLogger(Bot.class.getName());
+        SendMessage sendMessage = new SendMessage();
+        sendMessage.enableMarkdown(true);
+        sendMessage.setChatId(chatId);
+        sendMessage.setText(s);
+        sendMessage.setReplyMarkup(mode);
+        try {
+            execute(sendMessage);
+        } catch (TelegramApiException e) {
+            logger.log(Level.SEVERE, "Exception: " + e.toString());
+        }
+    }
+
     @Override
     public String getBotUsername() {
         return BOT_NAME;
     }
 
-    /**
-     * Метод возвращает token бота для связи с сервером Telegram
-     *
-     * @return token для бота
-     */
     @Override
     public String getBotToken() {
         return BOT_TOKEN;
-    }
-
-    public synchronized void setButtonsForStart(SendMessage sendMessage) {
-        // Создаем клавиуатуру
-        ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
-        sendMessage.setReplyMarkup(replyKeyboardMarkup);
-        replyKeyboardMarkup.setSelective(true);
-        replyKeyboardMarkup.setResizeKeyboard(true);
-        replyKeyboardMarkup.setOneTimeKeyboard(true);
-
-
-        // Создаем список строк клавиатуры
-        List<KeyboardRow> keyboard = new ArrayList<>();
-
-        // Первая строчка клавиатуры
-        KeyboardRow keyboardFirstRow = new KeyboardRow();
-        // Добавляем кнопки в первую строчку клавиатуры
-        keyboardFirstRow.add(new KeyboardButton("Получить геолокацию").setRequestLocation(true));
-        keyboardFirstRow.add(new KeyboardButton("Погода сейчас"));
-
-        // Вторая строчка клавиатуры
-        KeyboardRow keyboardSecondRow = new KeyboardRow();
-        // Добавляем кнопки во вторую строчку клавиатуры
-        keyboardSecondRow.add(new KeyboardButton("Помощь"));
-
-        // Добавляем все строчки клавиатуры в список
-        keyboard.add(keyboardFirstRow);
-        keyboard.add(keyboardSecondRow);
-        // и устанваливаем этот список нашей клавиатуре
-        replyKeyboardMarkup.setKeyboard(keyboard);
     }
 }

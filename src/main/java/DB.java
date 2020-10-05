@@ -57,7 +57,7 @@ public class DB {
         }
     }
 
-    public static String ReadDB(long userId) {
+    public static String ReadWeather(long userId, String mode) {
         String checkWheather = "SELECT user_latitude,user_longtitude FROM users_data WHERE user_id" + "='" + userId + "'";
         String res = "Что то сломалось☺";
         try {
@@ -69,13 +69,39 @@ public class DB {
                 Double user_y = rs.getDouble("user_longtitude");
 
                 String jsontemp = WeatherClass.get_json_string(user_x, user_y);
-                Model model = WeatherClass.jsonToCurrent(jsontemp);
+                String jsonFromDaily = WeatherClass.jsonToDaily(jsontemp);
 
-                res = "Сегодня: " + model.getDatetime() + "\n\n" +
-                        "Температура: " + model.getTemp() + " C" + "\n" +
-                        "Ощущается как: " + model.getFeelsLike() + " C" + "\n" +
-                        "Влажность: " + model.getHumidity() + " %" + "\n" +
-                        "Погодные условия: " + model.getWeatherDescription() + "\n";
+                switch (mode) {
+                    case "today":
+                        Model modelNow = WeatherClass.weatherNow(jsonFromDaily);
+                        res = "Температура: " + "\n\n" +
+                                "Утром: " + modelNow.getEve() + " C" + "\n" +
+                                "Днем: " + modelNow.getDay() + " C" + "\n" +
+                                "Вечером: " + modelNow.getMorn() + " C" + "\n" +
+                                "Ночью: " + modelNow.getNight() + " C" + "\n" +
+                                "Погодные условия: " + modelNow.getWeatherDescription() + "\n";
+                        break;
+
+                    case "now":
+                        Model modelToday = WeatherClass.jsonToCurrent(jsontemp);
+                        res = "Сегодня: " + modelToday.getDatetime() + "\n\n" +
+                                "Температура: " + modelToday.getTemp() + " C" + "\n" +
+                                "Ощущается как: " + modelToday.getFeelsLike() + " C" + "\n" +
+                                "Влажность: " + modelToday.getHumidity() + " %" + "\n" +
+                                "Погодные условия: " + modelToday.getWeatherDescription() + "\n";
+                        break;
+
+                    case "tomorrow":
+                        Model modelTomorrow = WeatherClass.weatherTomorrow(jsonFromDaily);
+                        res = "Температура: " + "\n\n" +
+                                "Утром: " + modelTomorrow.getEve() + " C" + "\n" +
+                                "Днем: " + modelTomorrow.getDay() + " C" + "\n" +
+                                "Вечером: " + modelTomorrow.getMorn() + " C" + "\n" +
+                                "Ночью: " + modelTomorrow.getNight() + " C" + "\n" +
+                                "Погодные условия: " + modelTomorrow.getWeatherDescription() + "\n";
+                        break;
+                }
+
             }
         } catch (ParseException | IOException | SQLException | ClassNotFoundException e) {
             e.printStackTrace();
@@ -93,11 +119,4 @@ public class DB {
         }
     }
 
-//    public static void main(String[] args) {
-//        WriteDB("onikore",
-//                (283134908L),
-//                56.81480407714844f,
-//                60.7106819152832f);
-//    }
 }
-
