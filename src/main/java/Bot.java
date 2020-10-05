@@ -24,6 +24,7 @@ public class Bot extends TelegramLongPollingBot {
         FileInputStream fileInputStream;
         Properties prop = new Properties();
         try {
+            DB.CreateDB();
             fileInputStream = new FileInputStream("src/main/resources/config.properties");
             prop.load(fileInputStream);
             BOT_NAME = prop.getProperty("BOT_NAME");
@@ -49,7 +50,6 @@ public class Bot extends TelegramLongPollingBot {
         Long userID = message.getChat().getId();
 
         if(message.hasLocation()) {
-            DB.CreateDB();
             float latitude = message.getLocation().getLatitude();
             float longtitude = message.getLocation().getLongitude();
 
