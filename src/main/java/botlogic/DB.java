@@ -1,69 +1,75 @@
+package botlogic;
+
+import models.weatherModel;
 import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
 import java.sql.*;
 
 public class DB {
-    private static Connection con;
-    private static Statement stmt;
-    private static ResultSet rs;
-
     private static final String className = "org.sqlite.JDBC";
     private static final String driverURL = "jdbc:sqlite:src/main/resources/users_location.db";
+    private static Connection con;
+    private static PreparedStatement stmt;
+    private static ResultSet rs;
 
-    public static void Connect() throws ClassNotFoundException, SQLException {
-        Class.forName(className);
-        con = DriverManager.getConnection(driverURL);
-        System.out.println("База Подключена!");
+    public static void connect() {
+        try {
+            Class.forName(className);
+            con = DriverManager.getConnection(driverURL);
+            System.out.println("База Подключена!");
+        } catch (ClassNotFoundException | SQLException e) {
+            e.printStackTrace();
+        }
     }
 
-    public static void CreateDB() {
+    public static void createDB() {
         try {
-            Connect();
-            stmt = con.createStatement();
-            stmt.execute("CREATE TABLE if not exists 'users_data' " +
+            connect();
+            con.createStatement().execute("CREATE TABLE if not exists 'users_data' " +
                     "('user_id' VARCHAR PRIMARY KEY UNIQUE , " +
                     "'user_name' VARCHAR ," +
                     "'user_latitude' DOUBLE, " +
                     "'user_longtitude' DOUBLE);");
-            System.out.println("Таблица создана или уже существует.");
-        } catch (SQLException | ClassNotFoundException e) {
+        } catch (SQLException e) {
             e.printStackTrace();
         }
+        System.out.println("Таблица создана или уже существует.");
     }
 
-    public static void WriteDB(String username, Long userId, float lantitude, float longtitude) {
+    public static void writeDB(String username, Long userId, float lantitude, float longtitude) {
         String insert_str = "INSERT INTO users_data (user_id, user_name,user_latitude,user_longtitude) VALUES (?,?,?,?);";
-        String check_id = "SELECT COUNT(*) FROM users_data WHERE user_id" + "='" + userId + "'";
+        String check_id = "SELECT COUNT(*) FROM users_data WHERE user_id = ?;";
         try {
-            Connect();
-            stmt = con.createStatement();
-            rs = stmt.executeQuery(check_id);
-            if (rs == null) {
-                PreparedStatement statement = con.prepareStatement(insert_str);
-                try {
-                    statement.setInt(1, Math.toIntExact(userId));
-                    statement.setString(2, username);
-                    statement.setFloat(3, lantitude);
-                    statement.setFloat(4, longtitude);
+            connect();
 
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                }
-            } else System.out.println("Пользователь с ID " + userId + " уже сущетвует");
+            stmt = con.prepareStatement(check_id);
+            stmt.setLong(1, userId);
+            rs = stmt.executeQuery();
 
-        } catch (SQLException | ClassNotFoundException e) {
+            if (rs.getLong(1) == 0) {
+                PreparedStatement state = con.prepareStatement(insert_str);
+                state.setInt(1, Math.toIntExact(userId));
+                state.setString(2, username);
+                state.setFloat(3, lantitude);
+                state.setFloat(4, longtitude);
+                state.execute();
+            } else {
+                System.out.println("Пользователь с ID " + userId + " уже сущетвует");
+            }
+        } catch (SQLException e) {
             e.printStackTrace();
         }
     }
 
-    public static String ReadWeather(long userId, String mode) {
-        String checkWheather = "SELECT user_latitude,user_longtitude FROM users_data WHERE user_id" + "='" + userId + "'";
-        String res = "Что то сломалось☺";
+    public static String readWeather(long userId, String mode) {
+        String checkWheather = "SELECT user_latitude,user_longtitude FROM users_data WHERE user_id=?;";
+        String res = "Что то сломалось";
         try {
-            Connect();
-            stmt = con.createStatement();
-            rs = stmt.executeQuery(checkWheather);
+            connect();
+            stmt = con.prepareStatement(checkWheather);
+            stmt.setLong(1, userId);
+            rs = stmt.executeQuery();
             while (rs.next()) {
                 Double user_x = rs.getDouble("user_latitude");
                 Double user_y = rs.getDouble("user_longtitude");
@@ -73,7 +79,7 @@ public class DB {
 
                 switch (mode) {
                     case "today":
-                        Model modelNow = WeatherClass.weatherNow(jsonFromDaily);
+                        weatherModel modelNow = WeatherClass.weatherNow(jsonFromDaily);
                         res = "Температура: " + "\n\n" +
                                 "Утром: " + modelNow.getEve() + " C" + "\n" +
                                 "Днем: " + modelNow.getDay() + " C" + "\n" +
@@ -83,7 +89,7 @@ public class DB {
                         break;
 
                     case "now":
-                        Model modelToday = WeatherClass.jsonToCurrent(jsontemp);
+                        weatherModel modelToday = WeatherClass.jsonToCurrent(jsontemp);
                         res = "Сегодня: " + modelToday.getDatetime() + "\n\n" +
                                 "Температура: " + modelToday.getTemp() + " C" + "\n" +
                                 "Ощущается как: " + modelToday.getFeelsLike() + " C" + "\n" +
@@ -92,7 +98,7 @@ public class DB {
                         break;
 
                     case "tomorrow":
-                        Model modelTomorrow = WeatherClass.weatherTomorrow(jsonFromDaily);
+                        weatherModel modelTomorrow = WeatherClass.weatherTomorrow(jsonFromDaily);
                         res = "Температура: " + "\n\n" +
                                 "Утром: " + modelTomorrow.getEve() + " C" + "\n" +
                                 "Днем: " + modelTomorrow.getDay() + " C" + "\n" +
@@ -101,15 +107,14 @@ public class DB {
                                 "Погодные условия: " + modelTomorrow.getWeatherDescription() + "\n";
                         break;
                 }
-
             }
-        } catch (ParseException | IOException | SQLException | ClassNotFoundException e) {
+        } catch (ParseException | IOException | SQLException e) {
             e.printStackTrace();
         }
         return res;
     }
 
-    public static void Close() {
+    public static void close() {
         try {
             con.close();
             stmt.close();
@@ -119,4 +124,12 @@ public class DB {
         }
     }
 
+    @Override
+    protected void finalize() throws Throwable {
+        try {
+            close();
+        } finally {
+            super.finalize();
+        }
+    }
 }

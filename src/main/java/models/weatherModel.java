@@ -1,4 +1,6 @@
-public class Model {
+package models;
+
+public class weatherModel {
     private String datetime;
     private Object temp;
     private Object humidity;
