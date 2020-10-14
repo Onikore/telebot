@@ -1,4 +1,4 @@
-package botlogic;
+package somelogic;
 
 import java.io.FileInputStream;
 import java.io.IOException;

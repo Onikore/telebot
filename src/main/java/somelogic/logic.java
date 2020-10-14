@@ -1,4 +1,4 @@
-package botlogic;
+package somelogic;
 
 import keyboards.keys;
 

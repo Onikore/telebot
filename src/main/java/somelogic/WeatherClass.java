@@ -1,4 +1,4 @@
-package botlogic;
+package somelogic;
 
 import models.weatherModel;
 import org.json.simple.JSONArray;

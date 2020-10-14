@@ -1,8 +1,9 @@
-import botlogic.DB;
-import botlogic.GetBotInfo;
-import botlogic.logic;
-import botlogic.message;
+import somelogic.DB;
+import somelogic.GetBotInfo;
+import somelogic.logic;
+import somelogic.message;
 import keyboards.keys;
+
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
@@ -37,7 +38,7 @@ public class Bot extends TelegramLongPollingBot {
                     message.getChat().getId(),
                     message.getLocation().getLatitude(),
                     message.getLocation().getLongitude());
-            botlogic.message msh = new message(chatID, "Я тебя записал, cпасибо", keys.Main());
+            somelogic.message msh = new message(chatID, "Я тебя записал, cпасибо", keys.Main());
             sender(msh.sendMsg());
         }
 
