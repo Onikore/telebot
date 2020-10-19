@@ -1,10 +1,11 @@
 package main;
 
 import keyboards.Keys;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import somelogic.DB;
 import somelogic.GetBotInfo;
 import somelogic.Logic;
-import somelogic.Message;
+import somelogic.MyMessage;
 
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
@@ -32,22 +33,22 @@ public class Bot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
-        org.telegram.telegrambots.meta.api.objects.Message message = update.getMessage();
+        Message message = update.getMessage();
         String chatID = String.valueOf(message.getChatId());
         Long userID = message.getChat().getId();
 
         if (message.hasLocation()) {
             DB.writeDB(message.getChat().getUserName(),
-                    message.getChat().getId(),
-                    message.getLocation().getLatitude(),
-                    message.getLocation().getLongitude());
-            Message msh = new Message(chatID, "Я тебя записал, cпасибо", Keys.main());
+                       message.getChat().getId(),
+                       message.getLocation().getLatitude(),
+                       message.getLocation().getLongitude());
+            MyMessage msh = new MyMessage(chatID, "Я тебя записал, cпасибо", Keys.main());
             sender(msh.sendMsg());
         }
 
         if (update.hasMessage() && message.hasText()) {
             Logic commands = new Logic();
-            Message a = commands.checkArgs(message.getText(), chatID, userID);
+            MyMessage a = commands.checkArgs(message.getText(), chatID, userID);
             sender(a.sendMsg());
         }
     }
