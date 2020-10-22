@@ -12,10 +12,12 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
-public class WeatherClass {
-    private static final String DAYFORMAT = "dd-MMMM-yyyy";
+import static consts.Constants.DAYFORMAT;
 
-    private WeatherClass() {
+public class WeatherParser {
+
+
+    private WeatherParser() {
     }
 
     public static String getJsonString(Double x, Double y) throws IOException {
@@ -24,7 +26,6 @@ public class WeatherClass {
                 x,
                 y,
                 GetBotInfo.getInfo("BOT_WEATHER_API"));
-
         return Jsoup.connect(url).ignoreContentType(true).execute().body();
     }
 

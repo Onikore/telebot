@@ -20,13 +20,12 @@ public class MyMessage {
         this.mode = mode;
     }
 
-    public synchronized SendMessage sendMsg() {
+    public SendMessage sendMsg() {
         SendMessage sendMessage = new SendMessage();
         sendMessage.enableMarkdown(true);
         sendMessage.setChatId(chatId);
         sendMessage.setText(s);
         if (mode != null) sendMessage.setReplyMarkup(mode);
-
         return sendMessage;
     }
 }

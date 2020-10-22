@@ -1,22 +1,23 @@
 package main;
 
 import keyboards.Keys;
-import org.telegram.telegrambots.meta.api.objects.Message;
-import somelogic.DB;
-import somelogic.GetBotInfo;
-import somelogic.Logic;
-import somelogic.MyMessage;
-
 import org.telegram.telegrambots.ApiContextInitializer;
 import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.TelegramBotsApi;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
+import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiRequestException;
+import somelogic.GetBotInfo;
+import somelogic.Logic;
+import somelogic.MyMessage;
 
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static somelogic.DB.close;
+import static somelogic.DB.writeDB;
 
 public class Bot extends TelegramLongPollingBot {
     private static final Logger logger = Logger.getLogger(Bot.class.getName());
@@ -38,10 +39,10 @@ public class Bot extends TelegramLongPollingBot {
         Long userID = message.getChat().getId();
 
         if (message.hasLocation()) {
-            DB.writeDB(message.getChat().getUserName(),
-                       message.getChat().getId(),
-                       message.getLocation().getLatitude(),
-                       message.getLocation().getLongitude());
+            writeDB(message.getChat().getUserName(),
+                    message.getChat().getId(),
+                    message.getLocation().getLatitude(),
+                    message.getLocation().getLongitude());
             MyMessage msh = new MyMessage(chatID, "Я тебя записал, cпасибо", Keys.main());
             sender(msh.sendMsg());
         }
@@ -50,6 +51,7 @@ public class Bot extends TelegramLongPollingBot {
             Logic commands = new Logic();
             MyMessage a = commands.checkArgs(message.getText(), chatID, userID);
             sender(a.sendMsg());
+            close();
         }
     }
 

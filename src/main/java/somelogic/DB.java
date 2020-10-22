@@ -7,27 +7,16 @@ import java.io.IOException;
 import java.sql.*;
 import java.util.logging.Logger;
 
+import static consts.Constants.*;
 import static java.lang.String.format;
 import static java.util.logging.Level.INFO;
 import static java.util.logging.Level.WARNING;
 
 public class DB {
-    private static final String CLASS = "org.sqlite.JDBC";
-    private static final String URL = "jdbc:sqlite:src/main/resources/usersData.db";
+    private static final Logger logger = Logger.getLogger(DB.class.getName());
     private static Connection con;
     private static PreparedStatement stmt;
     private static ResultSet rs;
-    private static final Logger logger = Logger.getLogger(DB.class.getName());
-
-    private static final String TEMPERATURE = "Температура: ";
-    private static final String DAY = "Днем: ";
-    private static final String MORN = "Вечером: ";
-    private static final String EVE = "Утром: ";
-    private static final String NIGHT = "Ночью: ";
-    private static final String DESCRIPTION = "Погодные условия: ";
-    private static final String NOW = "Сегодня: ";
-    private static final String HUMIDITY = "Влажность: ";
-    private static final String FEELSLIKE = "Ощущается как: ";
 
     private DB() {
     }
@@ -43,7 +32,6 @@ public class DB {
     }
 
     public static void createDB() {
-        boolean check = true;
         connect();
         try (Statement a = con.createStatement()) {
             a.execute("CREATE TABLE if not exists 'users_data' " +
@@ -53,10 +41,7 @@ public class DB {
                     "'user_longtitude' DOUBLE);");
             logger.log(INFO, "Таблица создана");
         } catch (SQLException e) {
-            check = false;
             logger.log(WARNING, format("Ошибка: %s", e));
-        } finally {
-            if (check) close();
         }
     }
 
@@ -65,7 +50,6 @@ public class DB {
         String check = "SELECT COUNT(*) FROM users_data WHERE user_id = ?;";
         try {
             connect();
-
             stmt = con.prepareStatement(check);
             stmt.setLong(1, userId);
             rs = stmt.executeQuery();
@@ -96,32 +80,34 @@ public class DB {
                 Double userX = rs.getDouble("user_latitude");
                 Double userY = rs.getDouble("user_longtitude");
 
-                String jsontemp = WeatherClass.getJsonString(userX, userY);
-                String jsonFromDaily = WeatherClass.jsonToDaily(jsontemp);
+                String jsontemp = WeatherParser.getJsonString(userX, userY);
+                String jsonFromDaily = WeatherParser.jsonToDaily(jsontemp);
 
                 if ("today".equals(mode)) {
-                    WeatherModel modelNow = WeatherClass.weatherNow(jsonFromDaily);
+                    WeatherModel modelNow = WeatherParser.weatherNow(jsonFromDaily);
                     res = TEMPERATURE + "\n\n" +
-                            EVE + modelNow.getEve() + " C" + "\n" +
-                            DAY + modelNow.getDay() + " C" + "\n" +
-                            MORN + modelNow.getMorn() + " C" + "\n" +
-                            NIGHT + modelNow.getNight() + " C" + "\n" +
+                            EVE + modelNow.getEve() + " C\n" +
+                            DAY + modelNow.getDay() + " C\n" +
+                            MORN + modelNow.getMorn() + " C\n" +
+                            NIGHT + modelNow.getNight() + " C\n" +
                             DESCRIPTION + modelNow.getWeatherDescription() + "\n";
                 } else if ("now".equals(mode)) {
-                    WeatherModel modelToday = WeatherClass.jsonToCurrent(jsontemp);
+                    WeatherModel modelToday = WeatherParser.jsonToCurrent(jsontemp);
                     res = NOW + modelToday.getDatetime() + "\n\n" +
-                            TEMPERATURE + modelToday.getTemp() + " C" + "\n" +
-                            FEELSLIKE + modelToday.getFeelsLike() + " C" + "\n" +
-                            HUMIDITY + modelToday.getHumidity() + " %" + "\n" +
+                            TEMPERATURE + modelToday.getTemp() + " C\n" +
+                            FEELSLIKE + modelToday.getFeelsLike() + " C\n" +
+                            HUMIDITY + modelToday.getHumidity() + " %\n" +
                             DESCRIPTION + modelToday.getWeatherDescription() + "\n";
                 } else if ("tomorrow".equals(mode)) {
-                    WeatherModel modelTomorrow = WeatherClass.weatherTomorrow(jsonFromDaily);
+                    WeatherModel modelTomorrow = WeatherParser.weatherTomorrow(jsonFromDaily);
                     res = TEMPERATURE + "\n\n" +
-                            EVE + modelTomorrow.getEve() + " C" + "\n" +
-                            DAY + modelTomorrow.getDay() + " C" + "\n" +
-                            MORN + modelTomorrow.getMorn() + " C" + "\n" +
-                            NIGHT + modelTomorrow.getNight() + " C" + "\n" +
+                            EVE + modelTomorrow.getEve() + " C\n" +
+                            DAY + modelTomorrow.getDay() + " C\n" +
+                            MORN + modelTomorrow.getMorn() + " C\n" +
+                            NIGHT + modelTomorrow.getNight() + " C\n" +
                             DESCRIPTION + modelTomorrow.getWeatherDescription() + "\n";
+                } else {
+                    throw new IllegalStateException("Unexpected value: " + mode);
                 }
             }
         } catch (ParseException | IOException | SQLException e) {
