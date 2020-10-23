@@ -53,16 +53,16 @@ public class DB {
             stmt = con.prepareStatement(check);
             stmt.setLong(1, userId);
             rs = stmt.executeQuery();
-            if (rs.getLong(1) != 0) {
-                logger.log(INFO, "Пользователь с ID {}  уже сущетвует", userId);
+            if (rs.getLong(1) == 0) {
+                stmt = con.prepareStatement(insertstr);
+                stmt.setInt(1, Math.toIntExact(userId));
+                stmt.setString(2, username);
+                stmt.setFloat(3, lantitude);
+                stmt.setFloat(4, longtitude);
+                stmt.execute();
+            } else {
+                logger.log(INFO, "Пользователь с ID {0}  уже сущетвует", userId);
             }
-
-            stmt = con.prepareStatement(insertstr);
-            stmt.setInt(1, Math.toIntExact(userId));
-            stmt.setString(2, username);
-            stmt.setFloat(3, lantitude);
-            stmt.setFloat(4, longtitude);
-            stmt.execute();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -80,8 +80,8 @@ public class DB {
                 Double userX = rs.getDouble("user_latitude");
                 Double userY = rs.getDouble("user_longtitude");
 
-                String jsontemp = WeatherParser.getJsonString(userX, userY);
-                String jsonFromDaily = WeatherParser.jsonToDaily(jsontemp);
+                String jsontemp = WeatherParser.jsonString(userX, userY);
+                String jsonFromDaily = WeatherParser.weatherDaily(jsontemp);
 
                 if ("today".equals(mode)) {
                     WeatherModel modelNow = WeatherParser.weatherNow(jsonFromDaily);
@@ -92,7 +92,7 @@ public class DB {
                             NIGHT + modelNow.getNight() + " C\n" +
                             DESCRIPTION + modelNow.getWeatherDescription() + "\n";
                 } else if ("now".equals(mode)) {
-                    WeatherModel modelToday = WeatherParser.jsonToCurrent(jsontemp);
+                    WeatherModel modelToday = WeatherParser.parsedWeather(jsontemp);
                     res = NOW + modelToday.getDatetime() + "\n\n" +
                             TEMPERATURE + modelToday.getTemp() + " C\n" +
                             FEELSLIKE + modelToday.getFeelsLike() + " C\n" +
