@@ -25,39 +25,18 @@ public class WeatherParser {
         return formater.format(date);
     }
 
-    public static String jsonString(Double x, Double y) throws IOException {
+    public static String getJsonContent(Double x, Double y) throws IOException {
         if (x == null || y == null) throw new IllegalStateException("Unexpected value");
         String url = String.format("https://api.openweathermap.org/data/2.5/onecall?lat=%s&lon=%s&appid=%s&lang=ru&units=metric",
                 x,
                 y,
-                GetBotInfo.getInfo("BOT_WEATHER_API"));
+                Config.getInfo("BOT_WEATHER_API"));
         return Jsoup.connect(url).ignoreContentType(true).execute().body();
     }
 
-
-    public static WeatherModel parsedWeather(String jsonData) throws ParseException {
-        WeatherModel model = new WeatherModel();
-        JSONObject parsedData = (JSONObject) JSONValue.parseWithException(jsonData);
-        JSONObject currentData = (JSONObject) parsedData.get("current");
-        long unixsecs = (long) currentData.get("dt");
-
-        JSONArray weather = (JSONArray) currentData.get("weather");
-        JSONObject description = (JSONObject) weather.get(0);
-
-        model.setDatetime(normalDate(unixsecs));
-        model.setTemp(currentData.get("temp"));
-        model.setFeelsLike(currentData.get("feels_like"));
-        model.setHumidity(currentData.get("humidity"));
-        model.setWeatherDescription((String) description.get("description"));
-
-        return model;
-    }
-
-
-    public static String weatherDaily(String jsonData) throws ParseException {
+    public static String getParsedStructure(String jsonData) throws ParseException {
         JSONObject parsedData = (JSONObject) JSONValue.parseWithException(jsonData);
         JSONArray dailyData = (JSONArray) parsedData.get("daily");
-
         JSONObject recievData = new JSONObject();
 
         for (Object dayKey : dailyData) {
@@ -65,7 +44,6 @@ public class WeatherParser {
 
             JSONObject dayData = (JSONObject) dayKey;
             JSONObject allTemp = (JSONObject) dayData.get("temp");
-
             JSONArray weather = (JSONArray) dayData.get("weather");
             JSONObject desc = (JSONObject) weather.get(0);
 
@@ -83,8 +61,25 @@ public class WeatherParser {
         return String.valueOf(recievData);
     }
 
+    public static WeatherModel getNowForecast(String jsonData) throws ParseException {
+        WeatherModel model = new WeatherModel();
+        JSONObject parsedData = (JSONObject) JSONValue.parseWithException(jsonData);
+        JSONObject currentData = (JSONObject) parsedData.get("current");
+        long unixsecs = (long) currentData.get("dt");
 
-    public static WeatherModel weatherNow(String jsonData) throws ParseException {
+        JSONArray weather = (JSONArray) currentData.get("weather");
+        JSONObject description = (JSONObject) weather.get(0);
+
+        model.setDatetime(normalDate(unixsecs));
+        model.setTemp(currentData.get("temp"));
+        model.setFeelsLike(currentData.get("feels_like"));
+        model.setHumidity(currentData.get("humidity"));
+        model.setWeatherDescription((String) description.get("description"));
+
+        return model;
+    }
+
+    public static WeatherModel getTodayForecast(String jsonData) throws ParseException {
         WeatherModel model = new WeatherModel();
 
         SimpleDateFormat formater = new SimpleDateFormat(DAYFORMAT);
@@ -102,8 +97,7 @@ public class WeatherParser {
         return model;
     }
 
-
-    public static WeatherModel weatherTomorrow(String jsonData) throws ParseException {
+    public static WeatherModel getTomorrowForecast(String jsonData) throws ParseException {
         WeatherModel model = new WeatherModel();
 
         SimpleDateFormat formater = new SimpleDateFormat(DAYFORMAT);

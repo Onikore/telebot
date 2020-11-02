@@ -45,7 +45,7 @@ public class DB {
         }
     }
 
-    public static void writeDB(String username, Long userId, float lantitude, float longtitude) {
+    public static void setUserData(String username, Long userId, float lantitude, float longtitude) {
         String insertstr = "INSERT INTO users_data (user_id, user_name,user_latitude,user_longtitude) VALUES (?,?,?,?);";
         String check = "SELECT COUNT(*) FROM users_data WHERE user_id = ?;";
         try {
@@ -68,52 +68,65 @@ public class DB {
         }
     }
 
-    public static String readWeather(long userId, String mode) {
+    public static double[] getUserCoords(long userId) {
         String checkWheather = "SELECT user_latitude,user_longtitude FROM users_data WHERE user_id=?;";
-        String res = "Что то сломалось";
+        double[] coords = new double[2];
         try {
             connect();
             stmt = con.prepareStatement(checkWheather);
             stmt.setLong(1, userId);
             rs = stmt.executeQuery();
-            while (rs.next()) {
-                Double userX = rs.getDouble("user_latitude");
-                Double userY = rs.getDouble("user_longtitude");
 
-                String jsontemp = WeatherParser.jsonString(userX, userY);
-                String jsonFromDaily = WeatherParser.weatherDaily(jsontemp);
+            double userX = rs.getDouble("user_latitude");
+            double userY = rs.getDouble("user_longtitude");
+            coords = new double[]{userX, userY};
 
-                if ("today".equals(mode)) {
-                    WeatherModel modelNow = WeatherParser.weatherNow(jsonFromDaily);
-                    res = TEMPERATURE + "\n\n" +
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return coords;
+    }
+
+    public static String getForecast(double[] coords, String mode) {
+        String result = "ЧТото сломалось";
+        try {
+            String jsontemp = WeatherParser.getJsonContent(coords[0], coords[1]);
+            String jsonFromDaily = WeatherParser.getParsedStructure(jsontemp);
+
+            switch (mode) {
+                case "today":
+                    WeatherModel modelNow = WeatherParser.getTodayForecast(jsonFromDaily);
+                    result = TEMPERATURE + "\n\n" +
                             EVE + modelNow.getEve() + " C\n" +
                             DAY + modelNow.getDay() + " C\n" +
                             MORN + modelNow.getMorn() + " C\n" +
                             NIGHT + modelNow.getNight() + " C\n" +
                             DESCRIPTION + modelNow.getWeatherDescription() + "\n";
-                } else if ("now".equals(mode)) {
-                    WeatherModel modelToday = WeatherParser.parsedWeather(jsontemp);
-                    res = NOW + modelToday.getDatetime() + "\n\n" +
+                    break;
+                case "now":
+                    WeatherModel modelToday = WeatherParser.getNowForecast(jsontemp);
+                    result = NOW + modelToday.getDatetime() + "\n\n" +
                             TEMPERATURE + modelToday.getTemp() + " C\n" +
                             FEELSLIKE + modelToday.getFeelsLike() + " C\n" +
                             HUMIDITY + modelToday.getHumidity() + " %\n" +
                             DESCRIPTION + modelToday.getWeatherDescription() + "\n";
-                } else if ("tomorrow".equals(mode)) {
-                    WeatherModel modelTomorrow = WeatherParser.weatherTomorrow(jsonFromDaily);
-                    res = TEMPERATURE + "\n\n" +
+                    break;
+                case "tomorrow":
+                    WeatherModel modelTomorrow = WeatherParser.getTomorrowForecast(jsonFromDaily);
+                    result = TEMPERATURE + "\n\n" +
                             EVE + modelTomorrow.getEve() + " C\n" +
                             DAY + modelTomorrow.getDay() + " C\n" +
                             MORN + modelTomorrow.getMorn() + " C\n" +
                             NIGHT + modelTomorrow.getNight() + " C\n" +
                             DESCRIPTION + modelTomorrow.getWeatherDescription() + "\n";
-                } else {
+                    break;
+                default:
                     throw new IllegalStateException("Unexpected value: " + mode);
-                }
             }
-        } catch (ParseException | IOException | SQLException e) {
+        } catch (ParseException | IOException e) {
             e.printStackTrace();
         }
-        return res;
+        return result;
     }
 
     public static void close() {
@@ -125,5 +138,4 @@ public class DB {
             e.printStackTrace();
         }
     }
-
 }

@@ -9,10 +9,10 @@ import java.util.logging.Logger;
 import static consts.Constants.PATH;
 import static errors.MyErrors.configNotFound;
 
-public class GetBotInfo {
-    private static final Logger log = Logger.getLogger(GetBotInfo.class.getName());
+public class Config {
+    private static final Logger log = Logger.getLogger(Config.class.getName());
 
-    private GetBotInfo() {
+    private Config() {
     }
 
     public static String getInfo(String field) {
