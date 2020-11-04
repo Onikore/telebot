@@ -31,11 +31,6 @@ public class DatabaseManagementSystem {
         this.longtitude = longtitude;
     }
 
-    // public static void main(String[] args) {
-    //     DatabaseManagementSystem dms = new DatabaseManagementSystem(123, 123, 123);
-    //     dms.getUserCords();
-    // }
-
     private void connect() {
         try {
             Class.forName(CLASS);
@@ -47,28 +42,39 @@ public class DatabaseManagementSystem {
     }
 
     private void createDB() {
+        String createSql = "CREATE TABLE if not exists 'users_data' " +
+                "(user_id INT PRIMARY KEY UNIQUE , " +
+                "user_latitude DOUBLE, " +
+                "user_longtitude DOUBLE);";
+
         try (Statement a = con.createStatement()) {
-            a.execute("CREATE TABLE if not exists 'users_data' " +
-                    "('user_id' INT PRIMARY KEY UNIQUE , " +
-                    "'user_latitude' DOUBLE, " +
-                    "'user_longtitude' DOUBLE);");
+            a.execute(createSql);
             logger.log(INFO, "Таблица создана");
         } catch (SQLException e) {
             logger.log(WARNING, "ОШИБКА СОЗДАНИЯ БАЗЫ ДАННЫХ ", e);
-        } finally {
-            close();
         }
+    }
+
+    private boolean checkState() {
+        String check = "SELECT COUNT(*) FROM users_data WHERE user_id = ?;";
+        boolean result = false;
+
+        try {
+            stmt = con.prepareStatement(check);
+            stmt.setLong(1, userId);
+            rs = stmt.executeQuery();
+            result = rs.getLong(1) == 0;
+        } catch (SQLException e) {
+            logger.log(WARNING, "ОШИБКА ПРОВЕРКИ СУЩЕСТВОВАНИЯ ПОЛЬЗОВАТЕЛЯ", e);
+        }
+        return result;
     }
 
     public void setUserCords() {
         String insertstr = "INSERT INTO users_data (user_id,user_latitude,user_longtitude) VALUES (?,?,?);";
-        String check = "SELECT COUNT(*) FROM users_data WHERE user_id = ?;";
+
         try {
-        	//TODO фикс nullpointerexception
-            stmt =con.prepareStatement(check);
-            stmt.setLong(1, userId);
-            rs = stmt.executeQuery();
-            if (rs.getLong(1) == 0) {
+            if (checkState()) {
                 stmt = con.prepareStatement(insertstr);
                 stmt.setLong(1, userId);
                 stmt.setFloat(2, lantitude);
@@ -89,6 +95,7 @@ public class DatabaseManagementSystem {
         double[] coords = new double[2];
         double userX = 0;
         double userY = 0;
+
         try {
             stmt = con.prepareStatement(checkWheather);
             stmt.setLong(1, userId);

@@ -5,18 +5,18 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.ReplyKeyboard;
 
 public class Answer {
 
-    private final String chatId;
-    private final String s;
+    private final long chatId;
+    private final String message;
     private ReplyKeyboard mode;
 
-    public Answer(String chatId, String s) {
+    public Answer(long chatId, String msg) {
         this.chatId = chatId;
-        this.s = s;
+        this.message = msg;
     }
 
-    public Answer(String chatId, String s, ReplyKeyboard mode) {
+    public Answer(long chatId, String msg, ReplyKeyboard mode) {
         this.chatId = chatId;
-        this.s = s;
+        this.message = msg;
         this.mode = mode;
     }
 
@@ -24,7 +24,7 @@ public class Answer {
         SendMessage sendMessage = new SendMessage();
         sendMessage.enableMarkdown(true);
         sendMessage.setChatId(chatId);
-        sendMessage.setText(s);
+        sendMessage.setText(message);
         if (mode != null) sendMessage.setReplyMarkup(mode);
         return sendMessage;
     }

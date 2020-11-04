@@ -6,19 +6,19 @@ import org.json.simple.parser.ParseException;
 import java.io.IOException;
 
 public class Logic {
-    private final String chatID;
+    private final long chatID;
     private String command;
     private float longtitude;
     private float lantitude;
     private final long userID;
 
-    public Logic(String command, String chatID, long userID) {
+    public Logic(String command, long chatID, long userID) {
         this.chatID = chatID;
         this.command = command;
         this.userID = userID;
     }
 
-    public Logic(long userId, float lantitude, float longtitude, String chatID) {
+    public Logic(long userId, float lantitude, float longtitude, long chatID) {
         this.chatID = chatID;
         this.longtitude = longtitude;
         this.lantitude = lantitude;
@@ -68,9 +68,4 @@ public class Logic {
         dms.setUserCords();
         return new Answer(chatID, "Я тебя записал, cпасибо", Keys.main());
     }
-
-    // public static void main(String[] args) {
-    //     Logic log = new Logic(12,12,12,"12");
-    //     log.setLocation();
-    // }
 }

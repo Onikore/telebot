@@ -31,8 +31,8 @@ public class Bot extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
         Message message = update.getMessage();
-        String chatID = String.valueOf(message.getChatId());
-        Long userID = message.getChat().getId();
+        long chatID = message.getChatId();
+        long userID = message.getChat().getId();
 
         if (message.hasLocation()) {
             Float latitude = message.getLocation().getLatitude();
@@ -42,8 +42,7 @@ public class Bot extends TelegramLongPollingBot {
             Answer answer = logic.setLocation();
             sender(answer.sendMsg());
 
-        }
-        if (update.hasMessage() && message.hasText()) {
+        } else if (update.hasMessage() && message.hasText()) {
             Logic logic = new Logic(message.getText(), chatID, userID);
             Answer answer = logic.getReply();
             sender(answer.sendMsg());
@@ -71,8 +70,4 @@ public class Bot extends TelegramLongPollingBot {
     public String getBotToken() {
         return Config.getInfo("BOT_TOKEN");
     }
-
-
-    //TODO СТАТИК ЗАПРЕЩЕН В ПОГОДА ПАРС И БД
-
 }
