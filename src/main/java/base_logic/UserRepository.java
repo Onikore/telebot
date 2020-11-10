@@ -8,40 +8,23 @@ import static consts.Constants.URL;
 import static java.util.logging.Level.INFO;
 import static java.util.logging.Level.WARNING;
 
-public class DatabaseManagementSystem {
-    private final Logger logger = Logger.getLogger(DatabaseManagementSystem.class.getName());
+public class UserRepository {
+    private final Logger logger = Logger.getLogger(UserRepository.class.getName());
     private Connection con;
     private PreparedStatement stmt;
     private ResultSet rs;
-    private final long userId;
-    private float lantitude;
-    private float longtitude;
 
-    public DatabaseManagementSystem(long userId) {
-        connect();
-        createDB();
-        this.userId = userId;
-    }
-
-    public DatabaseManagementSystem(long userId, float lantitude, float longtitude) {
-        connect();
-        createDB();
-        this.userId = userId;
-        this.lantitude = lantitude;
-        this.longtitude = longtitude;
-    }
-
+    //придумать пулл коннектов
     private void connect() {
         try {
             Class.forName(CLASS);
             con = DriverManager.getConnection(URL);
-            logger.log(INFO, "База подключена");
         } catch (ClassNotFoundException | SQLException e) {
             logger.log(WARNING, "ОШИБКА ПОДКЛЮЧЕНИЯ К БАЗЕ ДАННЫХ ", e);
         }
     }
 
-    private void createDB() {
+    public void createDB() {
         String createSql = "CREATE TABLE if not exists 'users_data' " +
                 "(user_id INT PRIMARY KEY UNIQUE , " +
                 "user_latitude DOUBLE, " +
@@ -55,7 +38,7 @@ public class DatabaseManagementSystem {
         }
     }
 
-    private boolean checkState() {
+    private boolean checkState(long userId) {
         String check = "SELECT COUNT(*) FROM users_data WHERE user_id = ?;";
         boolean result = false;
 
@@ -70,11 +53,11 @@ public class DatabaseManagementSystem {
         return result;
     }
 
-    public void setUserCords() {
+    public void setUserCords(long userId, float lantitude, float longtitude) {
         String insertstr = "INSERT INTO users_data (user_id,user_latitude,user_longtitude) VALUES (?,?,?);";
-
+        connect();
         try {
-            if (checkState()) {
+            if (checkState(userId)) {
                 stmt = con.prepareStatement(insertstr);
                 stmt.setLong(1, userId);
                 stmt.setFloat(2, lantitude);
@@ -90,12 +73,12 @@ public class DatabaseManagementSystem {
         }
     }
 
-    public double[] getUserCords() {
+    public double[] getUserCords(long userId) {
         String checkWheather = "SELECT user_latitude,user_longtitude FROM users_data WHERE user_id=?;";
         double[] coords = new double[2];
         double userX = 0;
         double userY = 0;
-
+        connect();
         try {
             stmt = con.prepareStatement(checkWheather);
             stmt.setLong(1, userId);

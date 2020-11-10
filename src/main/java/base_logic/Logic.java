@@ -4,37 +4,26 @@ import keyboards.Keys;
 import org.json.simple.parser.ParseException;
 
 import java.io.IOException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Logic {
-    private final long chatID;
-    private String command;
-    private float longtitude;
-    private float lantitude;
-    private final long userID;
 
-    public Logic(String command, long chatID, long userID) {
-        this.chatID = chatID;
-        this.command = command;
-        this.userID = userID;
-    }
+    private final Logger logger = Logger.getLogger(Logic.class.getName());
 
-    public Logic(long userId, float lantitude, float longtitude, long chatID) {
-        this.chatID = chatID;
-        this.longtitude = longtitude;
-        this.lantitude = lantitude;
-        this.userID = userId;
-    }
-
-    public Answer getReply() {
-        DatabaseManagementSystem dms = new DatabaseManagementSystem(userID);
+    public Answer getReply(String command, long chatID, long userID) {
+        UserRepository repo = new UserRepository();
         WeatherParser wp = null;
+
         try {
-            wp = new WeatherParser(dms.getUserCords());
+            wp = new WeatherParser(repo.getUserCords(userID));
         } catch (IOException | ParseException e) {
-            e.printStackTrace();
+            logger.log(Level.WARNING,"ОШИБКА",e);
         }
+
         switch (command) {
             case "/start":
+                repo.createDB();
                 return new Answer(chatID, "Привет", Keys.start());
 
             case "Погода сейчас":
@@ -61,11 +50,9 @@ public class Logic {
         }
     }
 
-    public Answer setLocation() {
-        DatabaseManagementSystem dms = new DatabaseManagementSystem(userID,
-                lantitude,
-                longtitude);
-        dms.setUserCords();
+    public Answer setLocation(long userId, float lantitude, float longtitude, long chatID) {
+        UserRepository dms = new UserRepository();
+        dms.setUserCords(userId,lantitude,longtitude);
         return new Answer(chatID, "Я тебя записал, cпасибо", Keys.main());
     }
 }

@@ -30,6 +30,8 @@ public class Bot extends TelegramLongPollingBot {
 
     @Override
     public void onUpdateReceived(Update update) {
+        Logic logic = new Logic();
+        Answer answer;
         Message message = update.getMessage();
         long chatID = message.getChatId();
         long userID = message.getChat().getId();
@@ -38,19 +40,16 @@ public class Bot extends TelegramLongPollingBot {
             Float latitude = message.getLocation().getLatitude();
             Float longitude = message.getLocation().getLongitude();
 
-            Logic logic = new Logic(userID, latitude, longitude, chatID);
-            Answer answer = logic.setLocation();
-            sender(answer.sendMsg());
-
+            answer = logic.setLocation(userID,
+                    latitude,
+                    longitude,
+                    chatID);
         } else if (update.hasMessage() && message.hasText()) {
-            Logic logic = new Logic(message.getText(), chatID, userID);
-            Answer answer = logic.getReply();
-            sender(answer.sendMsg());
-
+            answer = logic.getReply(message.getText(), chatID, userID);
         } else {
-            Answer answer = new Answer(chatID, "я не понимаю");
-            sender(answer.sendMsg());
+            answer = new Answer(chatID, "я не понимаю");
         }
+        sender(answer.sendMsg());
     }
 
     public void sender(SendMessage x) {

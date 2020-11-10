@@ -71,7 +71,7 @@ public class WeatherParser {
         return String.valueOf(recievData);
     }
 
-    private String getNowForecast() throws ParseException {
+    public String getNowForecast() throws ParseException {
         JSONObject parsedData = (JSONObject) JSONValue.parseWithException(dataNow);
         JSONObject currentData = (JSONObject) parsedData.get("current");
         long unixsecs = (long) currentData.get("dt");
@@ -86,7 +86,7 @@ public class WeatherParser {
                 DESCRIPTION + description.get("description") + "\n";
     }
 
-    private String getTodayForecast() throws ParseException {
+    public String getTodayForecast() throws ParseException {
         SimpleDateFormat formater = new SimpleDateFormat(DAYFORMAT);
         String newDate = formater.format(new Date());
 
@@ -101,7 +101,7 @@ public class WeatherParser {
                 DESCRIPTION + currentDay.get("description") + "\n";
     }
 
-    private String getTomorrowForecast() throws ParseException {
+    public String getTomorrowForecast() throws ParseException {
         SimpleDateFormat formater = new SimpleDateFormat(DAYFORMAT);
         Calendar calendar = Calendar.getInstance();
         calendar.add(Calendar.DAY_OF_YEAR, 1);
