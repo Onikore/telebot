@@ -39,12 +39,9 @@ public class Bot extends TelegramLongPollingBot {
         if (message.hasLocation()) {
             Float latitude = message.getLocation().getLatitude();
             Float longitude = message.getLocation().getLongitude();
-
-            answer = logic.setLocation(userID,
-                    latitude,
-                    longitude,
-                    chatID);
+            answer = logic.setLocation(userID, latitude, longitude, chatID);
         } else if (update.hasMessage() && message.hasText()) {
+
             answer = logic.getReply(message.getText(), chatID, userID);
         } else {
             answer = new Answer(chatID, "я не понимаю");

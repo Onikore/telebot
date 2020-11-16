@@ -14,7 +14,6 @@ public class UserRepository {
     private PreparedStatement stmt;
     private ResultSet rs;
 
-    //придумать пулл коннектов
     private void connect() {
         try {
             Class.forName(CLASS);

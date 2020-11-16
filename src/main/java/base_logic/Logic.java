@@ -12,18 +12,18 @@ public class Logic {
     private final Logger logger = Logger.getLogger(Logic.class.getName());
 
     public Answer getReply(String command, long chatID, long userID) {
-        UserRepository repo = new UserRepository();
+        UserRepository repos = new UserRepository();
         WeatherParser wp = null;
 
         try {
-            wp = new WeatherParser(repo.getUserCords(userID));
+            wp = new WeatherParser(repos.getUserCords(userID));
         } catch (IOException | ParseException e) {
             logger.log(Level.WARNING,"ОШИБКА",e);
         }
 
         switch (command) {
             case "/start":
-                repo.createDB();
+                repos.createDB();
                 return new Answer(chatID, "Привет", Keys.start());
 
             case "Погода сейчас":
