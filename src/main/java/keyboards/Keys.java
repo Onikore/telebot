@@ -12,7 +12,7 @@ public class Keys {
     private Keys() {
     }
 
-    public static synchronized ReplyKeyboard start() {
+    public static ReplyKeyboard start() {
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
         replyKeyboardMarkup.setSelective(true);
         replyKeyboardMarkup.setResizeKeyboard(true);
@@ -32,7 +32,7 @@ public class Keys {
         return replyKeyboardMarkup;
     }
 
-    public static synchronized ReplyKeyboard main() {
+    public static ReplyKeyboard main() {
         ReplyKeyboardMarkup replyKeyboardMarkup = new ReplyKeyboardMarkup();
         replyKeyboardMarkup.setSelective(true);
         replyKeyboardMarkup.setResizeKeyboard(true);
@@ -56,3 +56,4 @@ public class Keys {
         return replyKeyboardMarkup;
     }
 }
+
